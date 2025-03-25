@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+transformers
+torch
+faiss-cpu
+sentence-transformers
+langchain
+pydantic
+beautifulsoup4
+langchain-community
