@@ -14,6 +14,6 @@ COPY --from=requirements-stage /tmp/requirements.txt /home/requirements.txt
 RUN pip install --no-cache-dir --upgrade -r /home/requirements.txt
 
 COPY ./app /home/app
-COPY ./data/docs /home/data/docs
+COPY ./data/docs /home/lawgicx/data/docs
 
 CMD ["fastapi", "run", "app/main.py", "--port", "8000"]

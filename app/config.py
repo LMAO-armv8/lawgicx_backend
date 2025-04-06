@@ -3,11 +3,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     ALLOW_ORIGINS: str = '*'
     OPENAI_API_KEY: str
-    MODEL: str = 'gpt-4o-2024-08-06'
-    EMBEDDING_MODEL: str = 'text-embedding-3-large'
-    EMBEDDING_DIMENSIONS: int = 1024
+    MODEL: str = 'gemini-1.5-flash-latest'  # ✅ Annotated
+    EMBEDDING_MODEL: str = 'models/gemini-embedding-exp-03-07'  # ✅ Annotated
+    EMBEDDING_DIMENSIONS: int = 768
     REDIS_HOST: str = 'localhost'
-    REDIS_PORT: int = 6379
+    REDIS_PORT: int = 6380
     DOCS_DIR: str = 'data/docs'
     EXPORT_DIR: str = 'data'
     VECTOR_SEARCH_TOP_K: int = 10

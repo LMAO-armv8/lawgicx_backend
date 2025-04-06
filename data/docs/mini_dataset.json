@@ -1,0 +1,10 @@
+[
+    {
+        "Instruction": "What is the difference between a petition and a plaint in Indian law?",
+        "Response": "A petition is a formal request submitted to a courttribunalor authority to seek a specific remedy or relief. It is commonly used for various purposessuch as filing a writ petition in the High Court or submitting a petition for divorce. On the other handa plaint is a formal written statement of a plaintiff's claim in a civil lawsuit. The key difference is that a petition is more versatile and can be used for various legal matterswhile a plaint is specific to civil cases."
+    },
+    {
+        "Instruction": "When should a writ petition be filed in India?",
+        "Response": "A writ petition in India should be filed when a fundamental right of an individual is violatedor when there is an issue related to the violation of a legal or constitutional right. Common examples include filing a writ of habeas corpus for unlawful detentiona writ of mandamus to compel a public authority to perform its dutiesor a writ of certiorari to quash an order."
+    }
+]
