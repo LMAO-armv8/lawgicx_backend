@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 from app.db import get_redis, create_chat, chat_exists
-from app.assistants.assistant import RAGAssistant
+from app.assistants.assistant import GeminiRAGAssistant
 
 class ChatIn(BaseModel):
     message: str
@@ -34,6 +34,6 @@ async def chat(chat_id: str, chat_in: ChatIn):
     rdb = get_redis()
     if not await chat_exists(rdb, chat_id):
         raise HTTPException(status_code=404, detail=f'Chat {chat_id} does not exist')
-    assistant = RAGAssistant(chat_id=chat_id, rdb=rdb)
+    assistant = GeminiRAGAssistant(chat_id=chat_id, rdb=rdb)
     sse_stream = assistant.run(message=chat_in.message)
     return EventSourceResponse(sse_stream, background=rdb.aclose)

@@ -100,7 +100,20 @@ async def get_chat_messages(rdb, chat_id, last_n=None):
         messages = await rdb.json().get(CHAT_IDX_PREFIX + chat_id, '$.messages[*]')
     else:
         messages = await rdb.json().get(CHAT_IDX_PREFIX + chat_id, f'$.messages[-{last_n}:]')
-    return [{'role': m['role'], 'content': m['content']} for m in messages] if messages else []
+
+    if messages:
+        formatted_messages = []
+        for m in messages:
+            if 'parts' in m:
+                formatted_messages.append({'role': m['role'], 'parts': m['parts']})
+            elif 'content' in m:
+                formatted_messages.append({'role': m['role'], 'parts': m['content']})
+            else:
+                formatted_messages.append({'role': m['role'], 'parts': "No content provided"})
+        return formatted_messages
+    else:
+        return []
+
 
 async def get_chat(rdb, chat_id):
     return await rdb.json().get(chat_id)

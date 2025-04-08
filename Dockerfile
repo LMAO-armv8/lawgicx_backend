@@ -4,6 +4,7 @@ WORKDIR /tmp
 
 RUN pip install poetry
 COPY ./pyproject.toml ./poetry.lock* /tmp/
+RUN poetry self add poetry-plugin-export # Explicitly install the export plugin
 RUN poetry export -f requirements.txt --output requirements.txt --without-hashes
 
 FROM python:3.12-slim
