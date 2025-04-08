@@ -28,11 +28,7 @@ class GeminiRAGAssistant:
                 tools=tools,
             )
 
-            # if response.text:
-            #     self.console.print(response.text, style='cyan', end='')
-
             assistant_message = {"role": "assistant", "content": response.text}
-            # self.console.print('\n')
             return assistant_message
 
         except Exception as e:
@@ -57,7 +53,6 @@ class GeminiRAGAssistant:
         if hasattr(QueryKnowledgeBaseTool, "to_gemini_tool"):
             tools = [QueryKnowledgeBaseTool.to_gemini_tool()]
 
-        # Initial assistant response (potentially with tool call)
         assistant_message = await self._generate_chat_response(chat_messages, tools=tools)
 
         tool_calls = []
@@ -65,7 +60,6 @@ class GeminiRAGAssistant:
             function_call = assistant_message.parts[0].function_call
             tool_calls = [function_call]
 
-        # Handle tool calls and generate a final response
         if tool_calls:
             assistant_message = await self._handle_tool_calls(tool_calls, chat_messages)
 
@@ -76,6 +70,7 @@ class GeminiRAGAssistant:
             'created': int(time())
         }
         await add_chat_messages(self.rdb, self.chat_id, [user_db_message, assistant_db_message])
+        await self.sse_stream.send(assistant_db_message["content"]) # send the response to the sse stream.
 
     async def _handle_conversation_task(self, message):
         try:
