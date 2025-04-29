@@ -1,6 +1,6 @@
 import asyncio
 from rich.console import Console
-from app.db import get_redis
+from app.db import get_redis2
 import google.generativeai as genai
 from app.config import settings
 
@@ -14,23 +14,46 @@ class LocalGeminiRAGAssistant:
         self.console = Console()
         self.rdb = rdb
         self.chat_history = []
-        self.main_system_message = {'role': 'system', 'parts': MAIN_SYSTEM_PROMPT}
-        self.rag_system_message = {'role': 'system', 'parts': RAG_SYSTEM_PROMPT}
+        self.main_system_prompt = MAIN_SYSTEM_PROMPT
+        self.rag_system_prompt = RAG_SYSTEM_PROMPT
         self.history_size = history_size
         self.max_tool_calls = max_tool_calls
         self.log_tool_calls = log_tool_calls
         self.log_tool_results = log_tool_results
-        self.model = genai.GenerativeModel(model_name)
+        self.model = genai.GenerativeModel(
+            model_name,
+            safety_settings=[
+                {
+                    "category": genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    "threshold": genai.types.HarmBlockThreshold.BLOCK_NONE,
+                },
+                {
+                    "category": genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    "threshold": genai.types.HarmBlockThreshold.BLOCK_NONE,
+                },
+                {
+                    "category": genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    "threshold": genai.types.HarmBlockThreshold.BLOCK_NONE,
+                },
+                {
+                    "category": genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    "threshold": genai.types.HarmBlockThreshold.BLOCK_NONE,
+                }
+            ]
+        )
 
-    async def _generate_chat_response(self, system_message, chat_messages, tools=None):
-        messages = [system_message] + chat_messages
+    async def _generate_chat_response(self, system_prompt, chat_messages, tools=None):
+        system_prompt_message = {'role': 'user', 'parts': system_prompt}
+        messages = [system_prompt_message] + chat_messages
 
         try:
             response = self.model.generate_content(
-                chat_messages,
+                messages,
                 stream=False,
                 tools=tools,
             )
+
+            self.console.print(f"Raw Gemini Response: {response}", style="yellow") # Add this line
 
             if response.text:
                 self.console.print(response.text, style='cyan', end='')
@@ -55,24 +78,28 @@ class LocalGeminiRAGAssistant:
             tools = []
             if hasattr(QueryKnowledgeBaseTool, "to_gemini_tool"):
                 tools = [QueryKnowledgeBaseTool.to_gemini_tool()]
+                
+            print(tools)
 
             assistant_message = await self._generate_chat_response(
-                system_message=self.main_system_message,
+                system_prompt=self.main_system_prompt,
                 chat_messages=chat_messages,
                 tools=tools,
             )
 
+            function_call = None
             if (
                 assistant_message
                 and isinstance(assistant_message, dict)
                 and "parts" in assistant_message
                 and isinstance(assistant_message["parts"], list)
-                and hasattr(assistant_message["parts"][0], "function_call")
             ):
-                function_call = assistant_message["parts"][0].function_call
-                if self.log_tool_calls:
-                    self.console.print(f'TOOL CALL:\n{function_call}', style='red', end='\n\n')
+                for part in assistant_message["parts"]:
+                    if hasattr(part, "function_call") and part.function_call is not None:
+                        function_call = part.function_call
+                        break
 
+            if function_call:
                 if function_call.name == "QueryKnowledgeBaseTool":
                     kb_tool = function_call.args
                     kb_result = await QueryKnowledgeBaseTool.from_gemini_args(kb_tool, self.rdb)
@@ -85,19 +112,15 @@ class LocalGeminiRAGAssistant:
                     )
 
                     assistant_message = await self._generate_chat_response(
-                        system_message=self.rag_system_message,
+                        system_prompt=self.rag_system_prompt,
                         chat_messages=chat_messages,
                     )
 
-            self.chat_history.extend([
-                user_message,
-                {'role': 'assistant', 'parts': assistant_message["content"]}
-            ])
+            self.chat_history.extend([user_message, {'role': 'assistant', 'parts': assistant_message["content"]}])
 
 async def run_local_gemini_assistant():
-    async with get_redis() as rdb:
+    async with get_redis2() as rdb:
         await LocalGeminiRAGAssistant(rdb).run()
-
 def main():
     asyncio.run(run_local_gemini_assistant())
 

@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api import router
 from app.config import settings
 
-app = FastAPI()
+app = FastAPI(root_path="/api/chatbot")
 
 app.add_middleware(
     CORSMiddleware,

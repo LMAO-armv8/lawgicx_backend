@@ -3,8 +3,6 @@ version: '3.8'
 services:
   app:
     build: .
-    depends_on:
-      - redis
     environment:
       - ALLOW_ORIGINS
       - OPENAI_API_KEY
@@ -13,17 +11,12 @@ services:
       - EMBEDDING_DIMENSIONS
       - REDIS_HOST
       - REDIS_PORT
+      - REDIS_PORT2
       - DOCS_DIR
       - EXPORT_DIR
     ports:
-      - "8000:8000"
-    networks:
-      - mynetwork
-
-  redis:
-    image: redislabs/redisearch:latest
-    volumes:
-      - redis_data:/data
+      - "8080:8000"
+    restart: always
     networks:
       - mynetwork
 

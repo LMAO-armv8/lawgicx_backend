@@ -1,12 +1,17 @@
 import google.generativeai as genai
 from app.config import settings
+import requests
+import logging  # Import the logging module
 
 # Initialize Gemini
-genai.configure(api_key=settings.OPENAI_API_KEY)
+genai.configure(api_key=settings.OPENAI_API_KEY)  # Assuming you still use this for something else
 
 # Set model names
 chat_model = genai.GenerativeModel(settings.MODEL)
 # embedding_model = genai.GenerativeModel(settings.EMBEDDING_MODEL) # No longer needed
+
+# Get a logger instance
+logger = logging.getLogger(__name__)
 
 # Approximate tokenizer since Gemini doesn't expose one
 def token_size(text: str):
@@ -18,14 +23,21 @@ def get_embedding(input: str, model=settings.EMBEDDING_MODEL):
     Mimics OpenAI single embedding API.
     """
     try:
-        response = genai.embed_content( #corrected line
-            model=model,
-            content=input,
-            task_type="retrieval_document"
-        )
-        return response.embedding.values
-    except Exception as e:
-        print(f"Error getting embedding: {e}")
+        data = {
+            "model": "mxbai-embed-large",
+            "prompt": input,  # Use the 'input' argument
+        }
+        response = requests.post(url='http://localhost:11434/api/embeddings', json=data)
+        response.raise_for_status()  # Raise an exception for bad status codes
+        data = response.json()
+        embedding = data.get("embeddings")
+        logger.debug(f"Embedding for '{input}': {embedding}")
+        return embedding
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error getting embedding for '{input}': {e}")
+        return None
+    except KeyError:
+        logger.error(f"Error: 'embeddings' key not found in Ollama response for '{input}'. Response: {data}")
         return None
 
 def get_embeddings(inputs: list[str], model=settings.EMBEDDING_MODEL):
@@ -33,17 +45,25 @@ def get_embeddings(inputs: list[str], model=settings.EMBEDDING_MODEL):
     Mimics OpenAI batch embedding API.
     """
     embeddings = []
-    for inp in inputs:
+    for i, inp in enumerate(inputs):
         try:
-            response = genai.embed_content( #corrected line
-                model=model,
-                content=inp,
-                task_type="retrieval_document"
-            )
-            embeddings.append(response.embedding.values)
-        except Exception as e:
-            print(f"Error getting embedding for input '{inp}': {e}")
+            data = {
+                "model": "mxbai-embed-large",
+                "prompt": inp,
+            }
+            response = requests.post(url='http://localhost:11434/api/embeddings', json=data)
+            response.raise_for_status()  # Raise an exception for bad status codes
+            data = response.json()
+            embedding = data.get("embeddings")
+            embeddings.append(embedding)
+            logger.debug(f"Embedding for item {i + 1} ('{inp}'): {embedding}")
+            print(f"Item {i + 1} done")
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error getting embedding for input '{inp}': {e}")
             embeddings.append(None)  # Append None for failed embeddings
+        except KeyError:
+            logger.error(f"Error: 'embeddings' key not found in Ollama response for '{inp}'. Response: {data}")
+            embeddings.append(None)
     return embeddings
 
 def chat_stream(messages: list[dict], model=settings.MODEL, temperature=0.1, **kwargs):
@@ -65,3 +85,6 @@ def chat_stream(messages: list[dict], model=settings.MODEL, temperature=0.1, **k
         stream=True
     )
     return stream
+
+# Configure logging (optional, but helpful for debugging)
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

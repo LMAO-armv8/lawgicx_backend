@@ -8,7 +8,7 @@ from tqdm import tqdm
 from pdfminer.high_level import extract_text
 from app.utils.splitter import TextSplitter
 from app.openai import get_embeddings, token_size
-from app.db import get_redis, setup_db, add_chunks_to_vector_db
+from app.db import get_redis2, setup_db, add_chunks_to_vector_db
 from app.config import settings
 import google.generativeai as genai
 
@@ -86,7 +86,7 @@ def get_embeddings(inputs: list[str], model=settings.EMBEDDING_MODEL):
     return embeddings
 
 async def process_json_dataset(dataset_dir=settings.DOCS_DIR):
-    dataset_path = os.path.join(dataset_dir, "mini_dataset.json")
+    dataset_path = os.path.join(dataset_dir, "dataset.json")
     logging.info(f"Checking for JSON dataset at: {dataset_path}") #added logging
 
     if not os.path.exists(dataset_path):
@@ -147,7 +147,7 @@ async def process_json_dataset(dataset_dir=settings.DOCS_DIR):
 
 
 async def load_knowledge_base():
-    async with get_redis() as rdb:
+    async with get_redis2() as rdb:
         print('Setting up Redis database')
         await setup_db(rdb)
         pdf_chunks = await process_docs()
