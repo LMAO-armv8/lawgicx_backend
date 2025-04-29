@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     # REDIS_HOST: str = 'localhost'
     REDIS_HOST: str
     REDIS_PORT: int = 6379
-    REDIS_PORT2: int = 6380
+    REDIS_PORT2: int = 6390
     DOCS_DIR: str = 'data/docs'
     EXPORT_DIR: str = 'data'
     VECTOR_SEARCH_TOP_K: int = 10
