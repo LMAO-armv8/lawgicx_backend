@@ -86,7 +86,7 @@ def get_embeddings(inputs: list[str], model=settings.EMBEDDING_MODEL):
     return embeddings
 
 async def process_json_dataset(dataset_dir=settings.DOCS_DIR):
-    dataset_path = os.path.join(dataset_dir, "dataset.json")
+    dataset_path = os.path.join(dataset_dir, "mini_dataset.json")
     logging.info(f"Checking for JSON dataset at: {dataset_path}") #added logging
 
     if not os.path.exists(dataset_path):
