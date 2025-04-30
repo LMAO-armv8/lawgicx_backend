@@ -1,6 +1,7 @@
 import os
 import asyncio
 import json
+import requests
 import logging
 import time
 from uuid import uuid4
