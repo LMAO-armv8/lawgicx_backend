@@ -92,30 +92,32 @@ async def process_docs(docs_dir=settings.DOCS_DIR):
 #             embeddings.append(None)
 #     return embeddings
 
-async def process_json_dataset(dataset_dir=settings.DOCS_DIR):
+BATCH_SIZE = 100  # Tune as needed
+
+async def process_json_dataset(dataset_dir='your_default_docs_dir'):
     dataset_path = os.path.join(dataset_dir, "dataset.json")
-    logging.info(f"Checking for JSON dataset at: {dataset_path}") #added logging
+    logging.info(f"Checking for JSON dataset at: {dataset_path}")
 
     if not os.path.exists(dataset_path):
-        logging.warning(f"JSON dataset not found at {dataset_path}. Skipping JSON processing.") #added logging
+        logging.warning(f"JSON dataset not found at {dataset_path}. Skipping JSON processing.")
         return []
 
     print("\nProcessing JSON dataset...")
     try:
-      with open(dataset_path, 'r') as f:
-          data = json.load(f)
+        with open(dataset_path, 'r') as f:
+            data = json.load(f)
     except Exception as e:
         logging.error(f"Error loading json data: {e}")
         return []
 
     if not data:
-        logging.warning("JSON dataset is empty. Skipping JSON processing.") #added logging
+        logging.warning("JSON dataset is empty. Skipping JSON processing.")
         return []
 
     chunks = []
     for item in data:
-        instruction = item["Instruction"]
-        response = item["Response"]
+        instruction = item.get("Instruction")
+        response = item.get("Response")
         if not instruction or not response:
             logging.warning(f"Skipping JSON entry with empty instruction or response: {item}")
             continue
@@ -153,16 +155,42 @@ async def process_json_dataset(dataset_dir=settings.DOCS_DIR):
     return chunks
 
 
+async def add_chunks_to_vector_db(rdb, chunks):
+    print(f'\nWriting {len(chunks)} chunks to Redis in batches of {BATCH_SIZE}')
+    for i in range(0, len(chunks), BATCH_SIZE):
+        batch = chunks[i:i + BATCH_SIZE]
+        pipe = rdb.pipeline()
+        for chunk in batch:
+            try:
+                pipe.hset(f"doc_chunk:{chunk['chunk_id']}", mapping={
+                    'text': chunk['text'],
+                    'vector': json.dumps(chunk['vector']),  # Assumes list of floats
+                    'doc_name': chunk['doc_name']
+                })
+            except Exception as e:
+                logging.error(f"Error preparing chunk {chunk['chunk_id']} for Redis: {e}")
+        try:
+            await pipe.execute()
+        except Exception as e:
+            logging.error(f"Error writing batch {i // BATCH_SIZE + 1} to Redis: {e}")
+
+
 async def load_knowledge_base():
     async with get_redis2() as rdb:
-        print('Setting up Redis database')
+        print('Setting up Redis database...')
         await setup_db(rdb)
-        pdf_chunks = await process_docs()
+
+        print('Processing PDF documents...')
+        pdf_chunks = await process_docs()  # Assuming this returns list of chunk dicts
+
+        print('Processing JSON dataset...')
         json_chunks = await process_json_dataset()
+
         all_chunks = pdf_chunks + json_chunks
-        print('\nAdding chunks to vector db')
+        print('\nAdding chunks to vector db...')
         await add_chunks_to_vector_db(rdb, all_chunks)
-        print('\nKnowledge base loaded')
+
+        print('\n✅ Knowledge base loaded successfully')
 
 def main():
     asyncio.run(load_knowledge_base())
