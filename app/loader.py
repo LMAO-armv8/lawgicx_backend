@@ -1,7 +1,6 @@
 import os
 import asyncio
 import json
-import requests
 import logging
 import time
 from uuid import uuid4
@@ -67,31 +66,31 @@ async def process_docs(docs_dir=settings.DOCS_DIR):
         chunk['vector'] = vector
     return chunks
 
-def get_embeddings(inputs: list[str], model=settings.EMBEDDING_MODEL):
-    """
-    Mimics OpenAI batch embedding API.
-    """
-    embeddings = []
-    for i, inp in enumerate(inputs):
-        try:
-            data = {
-                "model": "mxbai-embed-large",
-                "prompt": inp,
-            }
-            response = requests.post(url='http://localhost:11434/api/embeddings', json=data)
-            response.raise_for_status()  # Raise an exception for bad status codes
-            data = response.json()
-            embedding = data.get("embeddings")
-            embeddings.append(embedding)
-            logger.debug(f"Embedding for item {i + 1} ('{inp}'): {embedding}")
-            print(f"Item {i + 1} done")
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error getting embedding for input '{inp}': {e}")
-            embeddings.append(None)  # Append None for failed embeddings
-        except KeyError:
-            logger.error(f"Error: 'embeddings' key not found in Ollama response for '{inp}'. Response: {data}")
-            embeddings.append(None)
-    return embeddings
+# def get_embeddings(inputs: list[str], model=settings.EMBEDDING_MODEL):
+#     """
+#     Mimics OpenAI batch embedding API.
+#     """
+#     embeddings = []
+#     for i, inp in enumerate(inputs):
+#         try:
+#             data = {
+#                 "model": "mxbai-embed-large",
+#                 "prompt": inp,
+#             }
+#             response = requests.post(url='http://localhost:11434/api/embeddings', json=data)
+#             response.raise_for_status()  # Raise an exception for bad status codes
+#             data = response.json()
+#             embedding = data.get("embeddings")
+#             embeddings.append(embedding)
+#             logger.debug(f"Embedding for item {i + 1} ('{inp}'): {embedding}")
+#             print(f"Item {i + 1} done")
+#         except requests.exceptions.RequestException as e:
+#             logger.error(f"Error getting embedding for input '{inp}': {e}")
+#             embeddings.append(None)  # Append None for failed embeddings
+#         except KeyError:
+#             logger.error(f"Error: 'embeddings' key not found in Ollama response for '{inp}'. Response: {data}")
+#             embeddings.append(None)
+#     return embeddings
 
 async def process_json_dataset(dataset_dir=settings.DOCS_DIR):
     dataset_path = os.path.join(dataset_dir, "mini_dataset.json")
@@ -126,7 +125,7 @@ async def process_json_dataset(dataset_dir=settings.DOCS_DIR):
         chunk = {
             'chunk_id': f'{doc_id}:0001',
             'text': text,
-            'doc_name': "mini_dataset_json",
+            'doc_name': "dataset_json",
             'vector': None
         }
         chunks.append(chunk)
