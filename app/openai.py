@@ -55,7 +55,7 @@ def get_embeddings(inputs: list[str], model=settings.EMBEDDING_MODEL):
             data = response.json()
             embedding = data.get("embedding")
             embeddings.append(embedding)
-            print(f"Item {i + 1} done")
+            # print(f"Item {i + 1} done")
         except requests.exceptions.RequestException as e:
             logger.error(f"Error getting embedding for input '{inp}': {e}")
             embeddings.append(None)  # Append None for failed embeddings
