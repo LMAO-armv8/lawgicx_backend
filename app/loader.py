@@ -95,7 +95,7 @@ async def process_docs(docs_dir=settings.DOCS_DIR):
 BATCH_SIZE = 100  # Tune as needed
 
 async def process_json_dataset(dataset_dir='your_default_docs_dir'):
-    dataset_path = os.path.join(dataset_dir, "dataset.json")
+    dataset_path = os.path.join(dataset_dir)
     logging.info(f"Checking for JSON dataset at: {dataset_path}")
 
     if not os.path.exists(dataset_path):
