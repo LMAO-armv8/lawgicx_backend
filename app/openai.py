@@ -30,7 +30,7 @@ def get_embedding(input: str, model=settings.EMBEDDING_MODEL):
         response = requests.post(url='http://localhost:11434/api/embeddings', json=data)
         response.raise_for_status()  # Raise an exception for bad status codes
         data = response.json()
-        embedding = data.get("embeddings")
+        embedding = data.get("embedding")
         logger.debug(f"Embedding for '{input}': {embedding}")
         return embedding
     except requests.exceptions.RequestException as e:
@@ -52,11 +52,9 @@ def get_embeddings(inputs: list[str], model=settings.EMBEDDING_MODEL):
                 "prompt": inp,
             }
             response = requests.post(url='http://localhost:11434/api/embeddings', json=data)
-            response.raise_for_status()  # Raise an exception for bad status codes
             data = response.json()
-            embedding = data.get("embeddings")
+            embedding = data.get("embedding")
             embeddings.append(embedding)
-            logger.debug(f"Embedding for item {i + 1} ('{inp}'): {embedding}")
             print(f"Item {i + 1} done")
         except requests.exceptions.RequestException as e:
             logger.error(f"Error getting embedding for input '{inp}': {e}")
