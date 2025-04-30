@@ -154,27 +154,6 @@ async def process_json_dataset(dataset_dir=settings.DOCS_DIR):
         chunk['vector'] = vector
     return chunks
 
-
-async def add_chunks_to_vector_db(rdb, chunks):
-    print(f'\nWriting {len(chunks)} chunks to Redis in batches of {BATCH_SIZE}')
-    for i in range(0, len(chunks), BATCH_SIZE):
-        batch = chunks[i:i + BATCH_SIZE]
-        pipe = rdb.pipeline()
-        for chunk in batch:
-            try:
-                pipe.hset(f"doc_chunk:{chunk['chunk_id']}", mapping={
-                    'text': chunk['text'],
-                    'vector': json.dumps(chunk['vector']),  # Assumes list of floats
-                    'doc_name': chunk['doc_name']
-                })
-            except Exception as e:
-                logging.error(f"Error preparing chunk {chunk['chunk_id']} for Redis: {e}")
-        try:
-            await pipe.execute()
-        except Exception as e:
-            logging.error(f"Error writing batch {i // BATCH_SIZE + 1} to Redis: {e}")
-
-
 async def load_knowledge_base():
     async with get_redis2() as rdb:
         print('Setting up Redis database...')
