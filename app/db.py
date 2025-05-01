@@ -47,7 +47,7 @@ async def create_vector_index(rdb):
         print(f"Error creating vector index '{VECTOR_IDX_NAME}': {e}")
 
 VECTOR_IDX_PREFIX = "vector:"  # Set this to your actual prefix
-BATCH_SIZE = 100  # Tune this value depending on load and network speed
+BATCH_SIZE = 10  # Tune this value depending on load and network speed
 
 async def add_chunks_to_vector_db(rdb, chunks):
     print(f'\nWriting {len(chunks)} chunks to Redis in batches of {BATCH_SIZE}')
@@ -56,7 +56,7 @@ async def add_chunks_to_vector_db(rdb, chunks):
         batch = chunks[i:i + BATCH_SIZE]
 
         pipe = rdb.pipeline(transaction=True)
-        print(f"Batch {i+1} is uploaded")
+        print(f"Batch {i+1} is uploading")
         for chunk in batch:
             try:
                 key = VECTOR_IDX_PREFIX + chunk['chunk_id']
