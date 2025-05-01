@@ -127,7 +127,7 @@ async def process_json_dataset(dataset_dir=settings.DOCS_DIR):
         chunk = {
             'chunk_id': f'{doc_id}:0001',
             'text': text,
-            'doc_name': "dataset_json",
+            'doc_name': "dataset.json",
             'vector': None
         }
         chunks.append(chunk)

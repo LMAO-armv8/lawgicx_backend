@@ -1,5 +1,6 @@
 import json
 import numpy as np
+import logging
 from redis.asyncio import Redis
 from redis.commands.search.field import TextField, VectorField, NumericField
 from redis.commands.search.indexDefinition import IndexDefinition, IndexType
@@ -55,8 +56,8 @@ async def add_chunks_to_vector_db(rdb, chunks):
         batch = chunks[i:i + BATCH_SIZE]
 
         pipe = rdb.pipeline(transaction=True)
+        print(f"Batch {i+1} is uploaded")
         for chunk in batch:
-            print(f"Batch {i+1} is uploaded")
             try:
                 key = VECTOR_IDX_PREFIX + chunk['chunk_id']
                 pipe.json().set(key, Path.root_path(), chunk)
